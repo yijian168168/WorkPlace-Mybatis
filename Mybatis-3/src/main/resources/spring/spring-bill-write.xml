@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:property-placeholder location="classpath*:properties/app.properties"/>
+
+    <!-- 数据源配置 -->
+    <bean id="writeDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="${write.jdbc.driverClassName}"/>
+        <property name="jdbcUrl" value="${write.jdbc.url}"/>
+        <property name="user" value="${write.jdbc.username}"/>
+        <property name="password" value="${write.jdbc.password}"/>
+    </bean>
+    <!--SessionFactory -->
+    <bean id="writeSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="writeDataSource"/>
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:mapper/write/*Mapper.xml</value>
+            </list>
+        </property>
+    </bean>
+    <!-- 加载MyBatis配置文件 -->
+    <bean id="writeMapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="writeSqlSessionFactory"/>
+        <property name="basePackage" value="com.com.mybatis.mapper.write"/>
+    </bean>
+    <bean id="writeTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="writeDataSource" />
+    </bean>
+    <!-- 声明使用注解式事务 -->
+    <tx:annotation-driven transaction-manager="writeTransactionManager"/>
+</beans>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 写数据源配置 -->
+    <bean id="writeDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="${write.jdbc.driverClassName}"/>
+        <property name="jdbcUrl" value="${write.jdbc.url}"/>
+        <property name="user" value="${write.jdbc.username}"/>
+        <property name="password" value="${write.jdbc.password}"/>
+    </bean>
+    <!-- 读数据源配置 -->
+    <bean id="readDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="${read.jdbc.driverClassName}"/>
+        <property name="jdbcUrl" value="${read.jdbc.url}"/>
+        <property name="user" value="${read.jdbc.username}"/>
+        <property name="password" value="${read.jdbc.password}"/>
+    </bean>
+
+    <bean id="dataSource" class="com.mybatis.DynamicDataSource" >
+        <property name="writeDataSource" ref="writeDataSource" />
+        <property name="readDataSources">
+            <list>
+                <ref bean="readDataSource" />
+            </list>
+        </property>
+        <!--轮询方式 0：随机，1：轮询-->
+        <property name="readDataSourcePollPattern" value="1" />
+        <property name="defaultTargetDataSource" ref="writeDataSource"/>
+    </bean>
+
+    <!--SessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="configLocation" value="classpath:mybatis/mybatis-plugin-config.xml" />
+        <property name="dataSource" ref="dataSource"/>
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:mappers/*Mapper.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 扫描器 -->
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <property name="basePackage" value="com.mybatis.mappers"/>
+    </bean>
+
+    <bean id="transactionManager" class="com.mybatis.DynamicDataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <!-- 声明使用注解式事务 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+</beans>

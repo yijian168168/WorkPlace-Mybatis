@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <!-- 数据源配置 -->
+    <bean id="readDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="${read.jdbc.driverClassName}"/>
+        <property name="jdbcUrl" value="${read.jdbc.url}"/>
+        <property name="user" value="${read.jdbc.username}"/>
+        <property name="password" value="${read.jdbc.password}"/>
+    </bean>
+    <!--SessionFactory -->
+    <bean id="readSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="readDataSource"/>
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:mapper/read/*Mapper.xml</value>
+            </list>
+        </property>
+    </bean>
+    <!-- 加载MyBatis配置文件 -->
+    <bean id="readMapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="readSqlSessionFactory"/>
+        <property name="basePackage" value="com.com.mybatis.mapper.read"/>
+    </bean>
+    <bean id="readTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="readDataSource" />
+    </bean>
+    <!-- 声明使用注解式事务 -->
+    <tx:annotation-driven transaction-manager="readTransactionManager"/>
+</beans>
